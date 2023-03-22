@@ -152,7 +152,7 @@ app.post("/comfort-and-care/forgot-password", async (req, res) => {
       });
 
       var mailOptions = {
-        from: "Thamu's Info <noreply.thamusinfo42@gmail.com>",
+        from: "Comfort and Care <noreply.thamusinfo42@gmail.com>",
         to: oldUser.email,
         replyTo: "noreply.thamusinfo42@gmail.com",
         subject: "Password Reset",
@@ -278,7 +278,7 @@ app.post("/comfort-and-care/forgotusername", async (req, res) => {
         },
       });
       var mailOptions = {
-        from: "Thamu's Info <noreply.thamusinfo42@gmail.com>",
+        from: "Comfort and Care <noreply.thamusinfo42@gmail.com>",
         to: email,
         replyTo: "noreply.thamusinfo42@gmail.com",
         subject: "Forgot username",
