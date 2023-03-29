@@ -334,6 +334,97 @@ Your username to login Comfort and Care is <span id="heading">${oldUser.username
     res.status(403).send({ message: "something went wrong" });
   }
 });
+//verfying the Bearer token
+function verifyToken(req, res, next) {
+  const bearerHeader = req.headers["authorization"];
+  if (bearerHeader) {
+    const bearer = bearerHeader.split(" ");
+    const bearerToken = bearer[1];
+    try {
+      const data = jwt.verify(bearerToken, JWT_REFERSH);
+      req.data = data;
+      return next();
+    } catch {
+      return res.sendStatus(403);
+    }
+  } else {
+    // Forbidden
+    res.sendStatus(403);
+  }
+}
+//To get profile information
+app.get("/comfort-and-care/profileinfo", verifyToken, async (req, res) => {
+  const username = req.data.username;
+  try {
+    const response = await registerUserSchema.find({username})
+      .select("username email mobilenumber gender")
+      .lean();
+    console.log("profile info retrived sucessfuly", response);
+    res.status(200).send({ profileinfo: response });
+  } catch (error) {
+    console.log(error);
+    res.send(error);
+  }
+});
+//Profile update Api
+app.post("/comfort-and-care/profileupdate", verifyToken, async (req, res) => {
+  const { username, gender, mobilenumber, email } = req.body;
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          username: username,
+          gender:gender,
+          mobilenumber:mobilenumber,
+          email:email
+        },
+      }
+    );
+    console.log(response);
+    res.status(200).send(response);
+  } catch (error) {
+    console.log(error);
+    res.status(401).send({ message: "Something went wrong" });
+  }
+});
+//Profile update Api
+app.post("/comfort-and-care/Addressupdate", verifyToken, async (req, res) => {
+  const { addressdata } = req.body;
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          address: addressdata,
+        },
+      }
+    );
+    console.log(response);
+    res.status(200).send(response);
+  } catch (error) {
+    console.log(error);
+    res.status(401).send({ message: "Something went wrong" });
+  }
+});
+//Getting Address
+app.get("/comfort-and-care/getAddress", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema.findOne({ _id: id })
+      .select("address")
+      .lean();
+    res.status(200).send({ address: response.address });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
 //server running port
 app.listen(port, () => {
   console.log(`app listening on port ${port}`);
