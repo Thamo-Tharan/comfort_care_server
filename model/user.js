@@ -8,6 +8,7 @@ const Userschema = new mongoose.Schema(
     mobilenumber: { type: String, required: true },
     gender: { type: String },
     address: { type: Array},
+    whistlist: { type: Array},
   },
   { collection: "allUsers" }
 );

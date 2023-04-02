@@ -10,6 +10,11 @@ const cookieParser = require("cookie-parser");
 mongoose.set("strictQuery", true);
 const bodyparser = require("body-parser");
 const registerUserSchema = require("./model/user");
+const Sofaschema = require("./model/sofa");
+const Beambagschema = require("./model/beambag");
+const Chairschema = require("./model/chair");
+const Bedschema =require('./model/bed')
+const DressingTableschema=require('./model/dressingTable')
 const nodemailer = require("nodemailer");
 //connection to mongoose
 mongoose.connect("mongodb://localhost:27017/comfort-and-care", {
@@ -19,7 +24,8 @@ mongoose.connect("mongodb://localhost:27017/comfort-and-care", {
 const JWT_SCRECT = "JJd5j<vqb||]:idU|kd)h7kV?wr_lfaC";
 const JWT_REFERSH = '2VW,"Dz`|G{%"jH|S@CCHH*Fi9vR8T<(';
 app.use("/", express.static(path.join(__dirname, "static")));
-app.use(bodyparser.json());
+app.use(bodyparser.json({ limit: "50mb" }));
+app.use(bodyparser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
@@ -356,7 +362,8 @@ function verifyToken(req, res, next) {
 app.get("/comfort-and-care/profileinfo", verifyToken, async (req, res) => {
   const username = req.data.username;
   try {
-    const response = await registerUserSchema.find({username})
+    const response = await registerUserSchema
+      .find({ username })
       .select("username email mobilenumber gender")
       .lean();
     console.log("profile info retrived sucessfuly", response);
@@ -378,9 +385,9 @@ app.post("/comfort-and-care/profileupdate", verifyToken, async (req, res) => {
       {
         $set: {
           username: username,
-          gender:gender,
-          mobilenumber:mobilenumber,
-          email:email
+          gender: gender,
+          mobilenumber: mobilenumber,
+          email: email,
         },
       }
     );
@@ -417,10 +424,184 @@ app.post("/comfort-and-care/Addressupdate", verifyToken, async (req, res) => {
 app.get("/comfort-and-care/getAddress", verifyToken, async (req, res) => {
   const id = req.data.id;
   try {
-    const response = await registerUserSchema.findOne({ _id: id })
+    const response = await registerUserSchema
+      .findOne({ _id: id })
       .select("address")
       .lean();
     res.status(200).send({ address: response.address });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//upload sofa commponent
+app.post("/comfort-and-care/uploadsofa", async (req, res) => {
+  const { name, price, offer, rating, path } = req.body;
+  try {
+    const response = await Sofaschema.create({
+      name,
+      price,
+      offer,
+      rating,
+      path,
+    });
+    res.status(200).send(response);
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//Getting sofainformation
+app.get("/comfort-and-care/getsofa", async (req, res) => {
+  try {
+    const response = await Sofaschema.find()
+      .select("_id name price offer rating path")
+      .lean();
+    res.status(200).send({ sofa: response });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//upload beambag commponent
+app.post("/comfort-and-care/uploadbeambag", async (req, res) => {
+  const { name, price, offer, rating, path } = req.body;
+  try {
+    const response = await Beambagschema.create({
+      name,
+      price,
+      offer,
+      rating,
+      path,
+    });
+    res.status(200).send(response);
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//Getting beambaginformation
+app.get("/comfort-and-care/getbeambag", async (req, res) => {
+  try {
+    const response = await Beambagschema.find()
+      .select("_id name price offer rating path")
+      .lean();
+    res.status(200).send({ sofa: response });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//upload chair commponent
+app.post("/comfort-and-care/uploadchair", async (req, res) => {
+  const { name, price, offer, rating, path } = req.body;
+  try {
+    const response = await Chairschema.create({
+      name,
+      price,
+      offer,
+      rating,
+      path,
+    });
+    res.status(200).send(response);
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//Getting chairinformation
+app.get("/comfort-and-care/getchair", async (req, res) => {
+  try {
+    const response = await Chairschema.find()
+      .select("_id name price offer rating path")
+      .lean();
+    res.status(200).send({ sofa: response });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+// add whistlist item
+app.post(
+  "/comfort-and-care/add-remove-whistlist",
+  verifyToken,
+  async (req, res) => {
+    const id = req.data.id;
+    const { whistlist } = req.body;
+    try {
+      const response = await registerUserSchema.updateOne(
+        {
+          _id: id,
+        },
+        {
+          $set: {
+            whistlist: whistlist,
+          },
+        }
+      );
+      console.log(response);
+      res.status(200).send(response);
+    } catch (error) {
+      console.log(error);
+      res.status(401).send({ message: "Something went wrong" });
+    }
+  }
+);
+//get whistlist
+app.get("/comfort-and-care/getwhistlist", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema.findOne({ _id: id })
+      .select("whistlist")
+      .lean();
+    res.status(200).send({ whistlist: response.whistlist });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//upload bed commponent
+app.post("/comfort-and-care/uploadbed", async (req, res) => {
+  const { name, price, offer, rating, path } = req.body;
+  try {
+    const response = await Bedschema.create({
+      name,
+      price,
+      offer,
+      rating,
+      path,
+    });
+    res.status(200).send(response);
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//Getting bedinformation
+app.get("/comfort-and-care/getbed", async (req, res) => {
+  try {
+    const response = await Bedschema.find()
+      .select("_id name price offer rating path")
+      .lean();
+    res.status(200).send({ sofa: response });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//upload dressingtable commponent
+app.post("/comfort-and-care/uploaddressingtable", async (req, res) => {
+  const { name, price, offer, rating, path } = req.body;
+  try {
+    const response = await DressingTableschema.create({
+      name,
+      price,
+      offer,
+      rating,
+      path,
+    });
+    res.status(200).send(response);
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+//Getting dressingtable
+app.get("/comfort-and-care/getdressingtable", async (req, res) => {
+  try {
+    const response = await DressingTableschema.find()
+      .select("_id name price offer rating path")
+      .lean();
+    res.status(200).send({ sofa: response });
   } catch (error) {
     res.status(400).send({ message: "Something went wrong" });
   }
