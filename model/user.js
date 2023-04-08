@@ -7,8 +7,10 @@ const Userschema = new mongoose.Schema(
     createdDate: { type: Date, default: Date.now },
     mobilenumber: { type: String, required: true },
     gender: { type: String },
-    address: { type: Array},
-    whistlist: { type: Array},
+    address: { type: Array },
+    whistlist: { type: Array },
+    cart: { type: Array },
+    savelater: { type: Array },
   },
   { collection: "allUsers" }
 );

@@ -13,9 +13,10 @@ const registerUserSchema = require("./model/user");
 const Sofaschema = require("./model/sofa");
 const Beambagschema = require("./model/beambag");
 const Chairschema = require("./model/chair");
-const Bedschema =require('./model/bed')
-const DressingTableschema=require('./model/dressingTable')
+const Bedschema = require("./model/bed");
+const DressingTableschema = require("./model/dressingTable");
 const nodemailer = require("nodemailer");
+const allProduct = [];
 //connection to mongoose
 mongoose.connect("mongodb://localhost:27017/comfort-and-care", {
   useNewUrlParser: true,
@@ -544,7 +545,8 @@ app.post(
 app.get("/comfort-and-care/getwhistlist", verifyToken, async (req, res) => {
   const id = req.data.id;
   try {
-    const response = await registerUserSchema.findOne({ _id: id })
+    const response = await registerUserSchema
+      .findOne({ _id: id })
       .select("whistlist")
       .lean();
     res.status(200).send({ whistlist: response.whistlist });
@@ -602,6 +604,84 @@ app.get("/comfort-and-care/getdressingtable", async (req, res) => {
       .select("_id name price offer rating path")
       .lean();
     res.status(200).send({ sofa: response });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+// add cart item
+app.post(
+  "/comfort-and-care/add-remove-cart",
+  verifyToken,
+  async (req, res) => {
+    const id = req.data.id;
+    const { cart } = req.body;
+    try {
+      const response = await registerUserSchema.updateOne(
+        {
+          _id: id,
+        },
+        {
+          $set: {
+            cart: cart,
+          },
+        }
+      );
+      console.log(response);
+      res.status(200).send(response);
+    } catch (error) {
+      console.log(error);
+      res.status(401).send({ message: "Something went wrong" });
+    }
+  }
+);
+//get cartitem
+app.get("/comfort-and-care/getcart", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema
+      .findOne({ _id: id })
+      .select("cart")
+      .lean();
+    res.status(200).send({ cart: response.cart });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+// add savelater item
+app.post(
+  "/comfort-and-care/add-remove-savelater",
+  verifyToken,
+  async (req, res) => {
+    const id = req.data.id;
+    const { savelater } = req.body;
+    try {
+      const response = await registerUserSchema.updateOne(
+        {
+          _id: id,
+        },
+        {
+          $set: {
+            savelater: savelater,
+          },
+        }
+      );
+      console.log(response);
+      res.status(200).send(response);
+    } catch (error) {
+      console.log(error);
+      res.status(401).send({ message: "Something went wrong" });
+    }
+  }
+);
+//get savelater
+app.get("/comfort-and-care/getsavelater", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema
+      .findOne({ _id: id })
+      .select("savelater")
+      .lean();
+    res.status(200).send({ savelater: response.savelater });
   } catch (error) {
     res.status(400).send({ message: "Something went wrong" });
   }
