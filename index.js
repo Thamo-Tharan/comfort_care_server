@@ -16,6 +16,7 @@ const Chairschema = require("./model/chair");
 const Bedschema = require("./model/bed");
 const DressingTableschema = require("./model/dressingTable");
 const nodemailer = require("nodemailer");
+const { JSDOM } = require("jsdom");
 const allProduct = [];
 //connection to mongoose
 mongoose.connect("mongodb://localhost:27017/comfort-and-care", {
@@ -609,31 +610,27 @@ app.get("/comfort-and-care/getdressingtable", async (req, res) => {
   }
 });
 // add cart item
-app.post(
-  "/comfort-and-care/add-remove-cart",
-  verifyToken,
-  async (req, res) => {
-    const id = req.data.id;
-    const { cart } = req.body;
-    try {
-      const response = await registerUserSchema.updateOne(
-        {
-          _id: id,
+app.post("/comfort-and-care/add-remove-cart", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  const { cart } = req.body;
+  try {
+    const response = await registerUserSchema.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          cart: cart,
         },
-        {
-          $set: {
-            cart: cart,
-          },
-        }
-      );
-      console.log(response);
-      res.status(200).send(response);
-    } catch (error) {
-      console.log(error);
-      res.status(401).send({ message: "Something went wrong" });
-    }
+      }
+    );
+    console.log(response);
+    res.status(200).send(response);
+  } catch (error) {
+    console.log(error);
+    res.status(401).send({ message: "Something went wrong" });
   }
-);
+});
 //get cartitem
 app.get("/comfort-and-care/getcart", verifyToken, async (req, res) => {
   const id = req.data.id;
@@ -685,6 +682,158 @@ app.get("/comfort-and-care/getsavelater", verifyToken, async (req, res) => {
   } catch (error) {
     res.status(400).send({ message: "Something went wrong" });
   }
+});
+//order placement
+app.post("/comfort-and-care/orderproduct", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  const { product } = req.body;
+  const obj = {
+    id,
+    product,
+  };
+  let order = [];
+  let total = 0;
+  let i = 0;
+  for (let i = 0; i < product.length; i++) {
+    //loop through the array
+    total += parseInt(product[i].offer); //Do the math!
+  }
+  try {
+    const user = await registerUserSchema.findOne({ _id: id }).lean();
+    if (!user) {
+      res.status(403).send({ message: "User not avaliable" });
+    } else {
+      const { email, myorder } = user;
+      order = myorder ?? [];
+      order.push(obj);
+      const response = await registerUserSchema.updateOne(
+        {
+          _id: id,
+        },
+        {
+          $set: {
+            myorder: order,
+          },
+        }
+      );
+      console.log(response);
+      let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "thamusinfo42@gmail.com",
+          pass: "tpugtypntidukqwl",
+        },
+      });
+      var mailOptions = {
+        from: "Comfort and Care <noreply.thamusinfo42@gmail.com>",
+        to: email,
+        replyTo: "noreply.thamusinfo42@gmail.com",
+        subject: "Your Order has been successfully placed.",
+        html: `
+        <html>
+<head>
+<style>
+#heading{
+  font-size: 17px;
+  font-weight: normal
+}
+#amount_div{
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+#thanks_div{
+text-align: center;
+font-size: 18px;
+}
+#order_box{
+width:30%
+}
+#order_div{
+  text-align: center;
+}
+#heading_img{
+  width:98%
+}
+</style>
+</head>
+<body>
+<div id="content">
+<img id="heading_img" src="https://ci6.googleusercontent.com/proxy/YMt6_ARlAWKkFVC24bx0s3rzOrQwkaaLgM-fjuLL_mWOZIy_xITYDT688_Nq7ehc1Yu0rKpUul2GFf8jHwOMjYNZ-XL-x6eL41axsTdca5XL5k1-jAMT0Hh3fCsss89fl0DKCwz5ABoZhNfPplsmn5w96KMaHoNGoFOC-48=s0-d-e1-ft#https://rukminim1.flixcart.com/www/834/60/promos/28/08/2017/de0c263a-65a0-4f4b-b141-5062917b7d9b.png?q=100">
+<div>
+<br/>
+<div id="heading">Dear ${user.username}</div>
+</div>
+<div id="order_div">
+<img id="order_box" src="https://cdn.pixabay.com/photo/2016/09/16/09/20/box-1673579_960_720.png">
+</div>
+<br/>
+<div>
+Thank you for your order.
+Your order will be delivered by courier. Someone must be present to receive your items. The courier will send a One-Time Password (OTP) to the phone number you entered in checkout, and will require the OTP from you when they arrive for delivery.
+<br/><br/>
+Your delivery date reflects no-contact safeguards put in place to protect employees, delivery partners and customers. We appreciate your patience.
+</div>
+<br/>
+<div id="buttondiv"></div>
+<div id="amount_div"><p>Amount Paid Rs ${total}</p></div>
+<div id="thanks_div"><p>Thank you for shopping with Comfort and Care!</p></div>
+</div>
+</body>
+</html>
+
+        `,
+      };
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("Email sent: " + info.response);
+        }
+      });
+      res.status(200).send({ message: "Order placed sucessfully" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(403).send({ message: "something went wrong" });
+  }
+});
+//get savelater
+app.get("/comfort-and-care/getorderProduct", verifyToken, async (req, res) => {
+  const id = req.data.id;
+  try {
+    const response = await registerUserSchema
+      .findOne({ _id: id })
+      .select("myorder")
+      .lean();
+    res.status(200).send({ myorder: response.myorder });
+  } catch (error) {
+    res.status(400).send({ message: "Something went wrong" });
+  }
+});
+const authorization = (req, res, next) => {
+  const token = req.cookies.access_token;
+  if (!token) {
+    return res.sendStatus(403);
+  }
+  try {
+    const data = jwt.verify(token, JWT_SCRECT);
+    req.data = data;
+    return next();
+  } catch {
+    return res.sendStatus(403);
+  }
+};
+//logout
+app.get("/logout", authorization, (req, res) => {
+  cookie = req.cookies;
+  for (var prop in cookie) {
+    if (!cookie.hasOwnProperty(prop)) {
+      continue;
+    }
+    res.cookie(prop, "", { expires: new Date(0) });
+  }
+  res.status(200).send({ message: "logout" });
 });
 //server running port
 app.listen(port, () => {

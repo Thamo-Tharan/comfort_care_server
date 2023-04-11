@@ -11,6 +11,7 @@ const Userschema = new mongoose.Schema(
     whistlist: { type: Array },
     cart: { type: Array },
     savelater: { type: Array },
+    myorder: { type: Array },
   },
   { collection: "allUsers" }
 );
